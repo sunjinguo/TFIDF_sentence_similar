@@ -1,0 +1,67 @@
+#coding=utf-8
+import jieba
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer
+jieba.load_userdict('./jieba_dic.txt')
+
+def TF_IDF_sim(title,content):
+    title_seg = ' '.join(jieba.cut(title))
+    content_seg = ' '.join(jieba.cut(content))
+    corpus=[]
+    corpus.append(title_seg)
+    corpus.append(content_seg)
+    vectorizer = CountVectorizer(token_pattern=r'(?u)\b\w\w*\b')
+    transformer = TfidfTransformer()
+    tf_idf = transformer.fit_transform(vectorizer.fit_transform(corpus))
+    word = vectorizer.get_feature_names()
+    print ' '.join(word)
+    vec_title, vec_content = tf_idf.toarray()
+    score = cos_sim(vec_title, vec_content)
+    return score
+
+def cos_sim(vector1, vector2):
+    print vector1,len(vector1)
+    print vector2
+    dot_product = 0.0;
+    normA = 0.0;
+    normB = 0.0;
+    for a, b in zip(vector1, vector2):
+        dot_product += a * b
+        normA += a ** 2
+        normB += b ** 2
+    if normA == 0.0 or normB == 0.0:
+        return None
+    else:
+        #print normA
+        return dot_product / ((normA * normB) ** 0.5)
+
+
+if __name__ == "__main__":
+    f1=open('/home/jinguo/code/10w_title','r')
+    f2=open('/home/jinguo/code/10w_content','r')
+    f3=open('/home/jinguo/QQ_recieved/10w_score_cossim_2','w')
+    for title,content in zip(f1,f2):
+        corpus=[]
+        title=''.join(title.split())
+        content = ''.join(content.split())
+        title_seg=' '.join(jieba.cut(title))
+        content_seg=' '.join(jieba.cut(content))
+        #print title_seg
+        #print content_seg
+        corpus.append(title_seg)
+        corpus.append(content_seg)
+        vectorizer=CountVectorizer(token_pattern=r'(?u)\b\w\w*\b')
+        transformer=TfidfTransformer()
+        print vectorizer.fit_transform(corpus)
+        tf_idf=transformer.fit_transform(vectorizer.fit_transform(corpus))
+        word=vectorizer.get_feature_names()
+        #stop_word=vectorizer.get_stop_words()
+        #print ' '.join(word)
+        vec_title,vec_content=tf_idf.toarray()
+        score=cos_sim(vec_title,vec_content)
+        print score
+        msg=str(score)+'\t'+title+'\t'+content+'\n'
+        f3.write(msg)
+    f1.close()
+    f2.close()
+    f3.close()
