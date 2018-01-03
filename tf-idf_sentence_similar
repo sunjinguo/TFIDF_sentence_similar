@@ -1,0 +1,51 @@
+#coding=utf-8
+import jieba
+import os
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.externals import joblib
+jieba.load_userdict('./jieba_dic.txt')
+tf_idf = joblib.load('./tfidf_features')
+
+
+def tfidf_model():
+    f1=open('/home/jinguo/code/10w_seg_content_1019','r')
+    corpus=[]
+    for line in f1:
+        msg=line.rstrip('\n').decode('utf-8')
+        corpus.append(msg)
+    tfidf_vectorizer = TfidfVectorizer(min_df=1,token_pattern=r'(?u)\b\w\w*\b')
+    tfidf_matrix = tfidf_vectorizer.fit_transform(corpus)
+    joblib.dump(tfidf_vectorizer,'./tfidf_features')
+
+def tfidf_sim(title,content):
+    title=title.rstrip('\n')
+    content = content.rstrip('\n')
+    corpus=[]
+    corpus.append(title)
+    corpus.append(content)
+    vecs=tf_idf.transform(corpus).toarray()
+    score_sim=vecs[0].dot(vecs[1].T)
+    return score_sim
+
+
+if __name__=='__main__':
+    #corpus必须为unicode
+    #tfidf训练
+    #tfidf_model()
+
+    f1=open('/home/jinguo/QQ_recieved/summary_1023.txt','r')
+    f2=open('/home/jinguo/QQ_recieved/content_tfidf','r')
+    f3=open('/home/jinguo/code/tfidf_score_1031','w')
+    for title,content in zip(f1,f2):
+        title=' '.join(jieba.cut(''.join(title.split())))
+        content=' '.join(jieba.cut(''.join(content.split())))
+        score=tfidf_sim(title,content)
+        msg=str(score)+'\t'+title.rstrip('\n')+'\t'+content.rstrip('\n')+'\n'
+        print msg
+        f3.write(msg.encode('utf-8'))
+    # title='将 对 朴槿惠 和 韩国 前 国情 院 院长 等 策划 暗杀'
+    # content='比 对 朴槿惠 和 韩国 前'
+    # score=tfidf_sim(title,content)
+    # print score
+
+
